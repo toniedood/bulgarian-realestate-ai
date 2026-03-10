@@ -1,0 +1,41 @@
+Започвам с S1, S2 и S3. 
+2 часа прекарани в разговори с Клод и ГПТ в това да обясня на код какви са ми задачите, как искам да ги изпълня и да си запълня знанията с ГПТ без да нарушавам и последователността на чата с Клод. 
+Също така и направих промяна по кода такава, че да се зарежда еднократно базата данни след което да се обработва единствено запитването. 
+Обясних на Клод, че искам да използвам Google Vertex Ai и сега започваме работа по стъпките по създаване на 3 отделни модела, които да си комуникират. 
+Започвам стъпка по стъпка по плана на Клод: 
+Step 1 → Set up Google Cloud + Vertex AI on your Mac
+Step 2 → Create new project folder and structure
+Step 3 → Generate Bulgarian property listings (rebuild M1)
+Step 4 → Build Bulgarian RAG pipeline (rebuild M2)
+Step 5 → Build buyer agents S1
+Step 6 → Build auction orchestrator S2
+Step 7 → Add LangGraph framework S3
+Step 8 → Build web interface
+Step 9 → Write README
+
+В рамките на 30 мин от началото бях готов със инсталирането на нужните инструменти и създаването на структурата на папките. Стъпка 1 и 2. 
+В следващата стъпка имах проблем със създаването на правилните файлове в директориите като използвам VS. През терминала ми е по-лесно, сякаш. 
+30 мин главоблъсканица, докато добавя API. И все още нестава... Пробвах да активирам акаунт да добавя проект, не бях с правилния акаунт в гоогле, сега съм и пак се бутам със стената. 
+И най-накрая стана (иначе аз ставах и си тръгвах... :D)
+Интегрирах Gemini и вече работи. Генерира имотите. 
+Това ще ми е за днес. Работата започна в 23:00 и приключва в 2:30. Много кратни корекции и подмяна на модели и версии на Пайтън, но все пак плодородно. 
+Преговора и от колегата: 
+Project 2 — Bulgarian Real Estate AI (New Project)
+
+✅ Google Cloud account with $300 credits
+✅ Project bulgarian-realestate-ai created
+✅ Vertex AI connected and working
+✅ Gemini 2.0 Flash responding in Bulgarian
+✅ Project folder structure created
+✅ All libraries installed
+✅ Config file set up
+✅ Generated 60 Bulgarian property listings using Gemini (M1 ✅)
+И какво ни остава 
+Step 4 → Build Bulgarian RAG pipeline (M2 rebuild)
+Step 5 → Build buyer agents (S1)
+Step 6 → Build auction orchestrator (S2)
+Step 7 → Add LangGraph framework (S3)
+Step 8 → Build web interface (M3)
+Step 9 → Write README
+Ще се видим утре! 
+
