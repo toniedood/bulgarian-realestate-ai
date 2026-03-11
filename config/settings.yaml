@@ -10,5 +10,5 @@ rag:
   chunk_min_length: 50
   collection_name: bulgarian_properties
   listings_folder: data/listings
-  n_results: 3
+  n_results: 5
   vector_db_path: ./vector_db

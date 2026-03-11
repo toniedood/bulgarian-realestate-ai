@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bulgarian Real Estate AI</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f1117;
+      color: #e8eaf0;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #1a1f2e 0%, #16213e 100%);
+      border-bottom: 1px solid #2a3352;
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    header h1 { font-size: 1.4rem; font-weight: 600; color: #fff; }
+    header span { font-size: 0.85rem; color: #7b8ab8; }
+    .badge {
+      background: #1e3a5f;
+      color: #60a5fa;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      padding: 20px 40px 0;
+      border-bottom: 1px solid #2a3352;
+      background: #0f1117;
+    }
+    .tab {
+      padding: 10px 24px;
+      border-radius: 8px 8px 0 0;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: #7b8ab8;
+      border: 1px solid transparent;
+      border-bottom: none;
+      transition: all 0.2s;
+    }
+    .tab:hover { color: #c0caef; background: #1a1f2e; }
+    .tab.active {
+      color: #fff;
+      background: #1a1f2e;
+      border-color: #2a3352;
+      border-bottom: 1px solid #1a1f2e;
+      margin-bottom: -1px;
+    }
+
+    /* ── Panels ── */
+    .panel { display: none; padding: 40px; max-width: 960px; margin: 0 auto; }
+    .panel.active { display: block; }
+
+    /* ── Search ── */
+    .search-box {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    input[type="text"] {
+      flex: 1;
+      background: #1a1f2e;
+      border: 1px solid #2a3352;
+      border-radius: 8px;
+      color: #e8eaf0;
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus { border-color: #3b5bdb; }
+    input[type="text"]::placeholder { color: #4a5580; }
+
+    button {
+      background: #3b5bdb;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 24px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    button:hover { background: #4c6ef5; }
+    button:disabled { background: #2a3352; color: #4a5580; cursor: not-allowed; }
+
+    /* ── Answer box ── */
+    .answer-box {
+      background: #1a1f2e;
+      border: 1px solid #2a3352;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      line-height: 1.7;
+      display: none;
+    }
+    .answer-box.visible { display: block; }
+    .answer-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #60a5fa;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    /* ── Sources ── */
+    .sources { display: flex; flex-direction: column; gap: 10px; }
+    .source-card {
+      background: #141824;
+      border: 1px solid #2a3352;
+      border-left: 3px solid #3b5bdb;
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+    .source-id { font-size: 0.8rem; font-weight: 700; color: #60a5fa; margin-bottom: 4px; }
+    .source-text { font-size: 0.85rem; color: #8892b0; line-height: 1.5; }
+
+    /* ── Auction ── */
+    .auction-btn-row { margin-bottom: 32px; }
+    .auction-btn-row p { color: #7b8ab8; font-size: 0.9rem; margin-top: 10px; }
+
+    .property-card {
+      background: #1a1f2e;
+      border: 1px solid #2a3352;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    .property-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid #2a3352;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .property-title { font-weight: 600; font-size: 1rem; }
+    .property-meta { font-size: 0.82rem; color: #7b8ab8; margin-top: 3px; }
+    .result-pill {
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+    .result-pill.won { background: #14532d; color: #4ade80; }
+    .result-pill.unsold { background: #3f1515; color: #f87171; }
+
+    /* ── Evaluations ── */
+    .eval-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+      padding: 20px 24px;
+      border-bottom: 1px solid #2a3352;
+    }
+    .eval-card {
+      background: #141824;
+      border: 1px solid #2a3352;
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .eval-agent {
+      font-weight: 700;
+      font-size: 0.9rem;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .score-bar-wrap { background: #0f1117; border-radius: 4px; height: 6px; margin: 8px 0; }
+    .score-bar { height: 6px; border-radius: 4px; background: #3b5bdb; }
+    .eval-reasoning { font-size: 0.8rem; color: #7b8ab8; line-height: 1.5; margin-top: 6px; }
+    .tag {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 700;
+    }
+    .tag.yes { background: #14532d; color: #4ade80; }
+    .tag.no  { background: #3f1515; color: #f87171; }
+
+    /* ── Rounds ── */
+    .rounds { padding: 16px 24px; }
+    .rounds-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 1px; color: #60a5fa; text-transform: uppercase; margin-bottom: 10px; }
+    .round-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      padding: 8px 0;
+      border-bottom: 1px solid #1a1f2e;
+      font-size: 0.85rem;
+    }
+    .round-num { color: #4a5580; width: 60px; flex-shrink: 0; }
+    .bid-chip {
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .bid-chip.bid   { background: #1e3a5f; color: #60a5fa; }
+    .bid-chip.pass  { background: #2a1f1f; color: #6b4040; }
+    .round-leader { margin-left: auto; font-size: 0.8rem; color: #4ade80; font-weight: 600; }
+
+    /* ── Agent summary ── */
+    .agents-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 32px;
+    }
+    .agent-card {
+      background: #1a1f2e;
+      border: 1px solid #2a3352;
+      border-radius: 10px;
+      padding: 18px;
+    }
+    .agent-name { font-weight: 700; font-size: 1rem; margin-bottom: 6px; }
+    .agent-detail { font-size: 0.82rem; color: #7b8ab8; margin-bottom: 3px; }
+    .agent-won { margin-top: 10px; font-size: 0.82rem; color: #4ade80; font-weight: 600; }
+    .agent-lost { margin-top: 10px; font-size: 0.82rem; color: #f87171; }
+
+    /* ── Spinner ── */
+    .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid #3b5bdb;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Listings ── */
+    .listings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 14px;
+    }
+    .listing-card {
+      background: #1a1f2e;
+      border: 1px solid #2a3352;
+      border-radius: 10px;
+      padding: 16px;
+    }
+    .listing-id   { font-size: 0.75rem; color: #4a5580; margin-bottom: 4px; }
+    .listing-title { font-size: 0.88rem; font-weight: 600; line-height: 1.4; margin-bottom: 8px; }
+    .listing-price { font-size: 0.85rem; color: #60a5fa; font-weight: 700; }
+
+    .section-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: #c0caef;
+    }
+
+    .hint {
+      font-size: 0.82rem;
+      color: #4a5580;
+      margin-bottom: 20px;
+    }
+    .hint button {
+      background: none;
+      border: none;
+      color: #60a5fa;
+      cursor: pointer;
+      font-size: 0.82rem;
+      padding: 0;
+      text-decoration: underline;
+    }
+    .hint button:hover { background: none; color: #93c5fd; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Bulgarian Real Estate AI</h1>
+    <span>Powered by Gemini 2.0 Flash + ChromaDB + LangGraph</span>
+  </div>
+  <div class="badge">DEMO</div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('search')">Property Search</div>
+  <div class="tab" onclick="showTab('auction')">Run Auction</div>
+  <div class="tab" onclick="showTab('listings')">All Listings</div>
+</div>
+
+<!-- ── SEARCH TAB ──────────────────────────────────────────────── -->
+<div id="tab-search" class="panel active">
+  <div class="section-title">Ask about Bulgarian properties</div>
+  <p class="hint">
+    Ask in Bulgarian or English. Try:
+    <button onclick="fillQ('Покажи ми апартаменти с морска гледка в Бургас')">апартаменти с морска гледка в Бургас</button> ·
+    <button onclick="fillQ('Кои имоти са в София с 3 спални?')">имоти в София с 3 спални</button> ·
+    <button onclick="fillQ('Show me properties under 200,000 EUR')">properties under 200k EUR</button>
+  </p>
+
+  <div class="search-box">
+    <input type="text" id="search-input" placeholder="Какъв имот търсите?" onkeydown="if(event.key==='Enter') doSearch()" />
+    <button id="search-btn" onclick="doSearch()">Search</button>
+  </div>
+
+  <div class="answer-box" id="answer-box">
+    <div class="answer-label">Gemini Answer</div>
+    <div id="answer-text"></div>
+  </div>
+
+  <div id="sources-section" style="display:none">
+    <div class="answer-label" style="margin-bottom:12px">Listings Used as Context</div>
+    <div class="sources" id="sources-list"></div>
+  </div>
+</div>
+
+<!-- ── AUCTION TAB ─────────────────────────────────────────────── -->
+<div id="tab-auction" class="panel">
+  <div class="section-title">AI Auction Simulation</div>
+
+  <div class="auction-btn-row">
+    <button id="auction-btn" onclick="runAuction()">Run New Auction</button>
+    <p>Picks 5 random listings · 3 AI buyers evaluate and bid · LangGraph orchestrates the rounds</p>
+  </div>
+
+  <div id="agents-section" style="display:none">
+    <div class="answer-label" style="margin-bottom:14px">Buyer Agents</div>
+    <div class="agents-grid" id="agents-grid"></div>
+  </div>
+
+  <div id="auction-results"></div>
+</div>
+
+<!-- ── LISTINGS TAB ────────────────────────────────────────────── -->
+<div id="tab-listings" class="panel">
+  <div class="section-title">All 60 Listings</div>
+  <div class="listings-grid" id="listings-grid">
+    <div style="color:#4a5580">Loading...</div>
+  </div>
+</div>
+
+<script>
+  // ── Tab switching ──────────────────────────────────────────────
+  function showTab(name) {
+    document.querySelectorAll('.tab').forEach((t, i) => {
+      t.classList.toggle('active', ['search','auction','listings'][i] === name)
+    })
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'))
+    document.getElementById('tab-' + name).classList.add('active')
+    if (name === 'listings' && !window._listingsLoaded) loadListings()
+  }
+
+  function fillQ(q) {
+    document.getElementById('search-input').value = q
+    doSearch()
+  }
+
+  // ── Search ────────────────────────────────────────────────────
+  async function doSearch() {
+    const q   = document.getElementById('search-input').value.trim()
+    const btn = document.getElementById('search-btn')
+    if (!q) return
+
+    btn.disabled = true
+    btn.innerHTML = '<span class="spinner"></span>Searching...'
+    document.getElementById('answer-box').classList.remove('visible')
+    document.getElementById('sources-section').style.display = 'none'
+
+    try {
+      const res  = await fetch('/search', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({question: q})
+      })
+      const data = await res.json()
+
+      document.getElementById('answer-text').textContent = data.answer
+      document.getElementById('answer-box').classList.add('visible')
+
+      const sl = document.getElementById('sources-list')
+      sl.innerHTML = data.sources.map(s => `
+        <div class="source-card">
+          <div class="source-id">${s.listing_id} · ${s.chunk_type}</div>
+          <div class="source-text">${s.preview}…</div>
+        </div>
+      `).join('')
+      document.getElementById('sources-section').style.display = 'block'
+
+    } catch (e) {
+      document.getElementById('answer-text').textContent = 'Error: ' + e.message
+      document.getElementById('answer-box').classList.add('visible')
+    }
+
+    btn.disabled = false
+    btn.textContent = 'Search'
+  }
+
+  // ── Auction ───────────────────────────────────────────────────
+  async function runAuction() {
+    const btn = document.getElementById('auction-btn')
+    btn.disabled = true
+    btn.innerHTML = '<span class="spinner"></span>Running auction...'
+    document.getElementById('agents-section').style.display = 'none'
+    document.getElementById('auction-results').innerHTML = ''
+
+    try {
+      const res  = await fetch('/auction', { method: 'POST' })
+      const data = await res.json()
+
+      // Agents summary
+      const ag = document.getElementById('agents-grid')
+      ag.innerHTML = data.agents.map(a => `
+        <div class="agent-card">
+          <div class="agent-name">${a.name}</div>
+          <div class="agent-detail">Budget: <strong>€${fmt(a.budget)}</strong></div>
+          <div class="agent-detail">Strategy: ${a.strategy}</div>
+          ${a.won ? `<div class="agent-won">Won: ${a.won}</div>` : `<div class="agent-lost">No wins</div>`}
+        </div>
+      `).join('')
+      document.getElementById('agents-section').style.display = 'block'
+
+      // Property results
+      const ar = document.getElementById('auction-results')
+      ar.innerHTML = data.properties.map(p => {
+        const pill = p.winner
+          ? `<span class="result-pill won">Won by ${p.winner}</span>`
+          : `<span class="result-pill unsold">Unsold</span>`
+
+        const priceLine = p.winner
+          ? `€${fmt(p.asking_price)} asking → <strong style="color:#4ade80">€${fmt(p.final_price)}</strong> final`
+          : `€${fmt(p.asking_price)} asking`
+
+        const evals = p.evaluations.map(e => `
+          <div class="eval-card">
+            <div class="eval-agent">
+              <span>${e.agent} <span style="color:#4a5580;font-weight:400">(${e.strategy})</span></span>
+              <span class="tag ${e.interested ? 'yes' : 'no'}">${e.interested ? 'YES' : 'NO'}</span>
+            </div>
+            <div style="font-size:0.78rem;color:#7b8ab8">Score: ${e.score}/10 · Max: €${fmt(e.max_pay)}</div>
+            <div class="score-bar-wrap"><div class="score-bar" style="width:${e.score*10}%"></div></div>
+            <div class="eval-reasoning">${e.reasoning}</div>
+          </div>
+        `).join('')
+
+        const rounds = p.rounds.map(r => {
+          const bids = r.bids.map(b =>
+            b.passed
+              ? `<span class="bid-chip pass">${b.agent}: pass</span>`
+              : `<span class="bid-chip bid">${b.agent}: €${fmt(b.bid)}</span>`
+          ).join('')
+          const leader = r.leader ? `<span class="round-leader">↑ ${r.leader} leads</span>` : ''
+          return `<div class="round-row"><span class="round-num">Round ${r.round}</span>${bids}${leader}</div>`
+        }).join('')
+
+        const roundsSection = p.rounds.length
+          ? `<div class="rounds"><div class="rounds-label">Bidding Rounds</div>${rounds}</div>`
+          : `<div class="rounds" style="color:#4a5580;font-size:0.85rem">No bids — property unsold.</div>`
+
+        return `
+          <div class="property-card">
+            <div class="property-header">
+              <div>
+                <div class="property-title">${p.title}</div>
+                <div class="property-meta">${p.property_id} · ${priceLine}</div>
+              </div>
+              ${pill}
+            </div>
+            <div class="eval-grid">${evals}</div>
+            ${roundsSection}
+          </div>
+        `
+      }).join('')
+
+    } catch (e) {
+      document.getElementById('auction-results').innerHTML =
+        `<div style="color:#f87171">Error: ${e.message}</div>`
+    }
+
+    btn.disabled = false
+    btn.textContent = 'Run New Auction'
+  }
+
+  // ── Listings ──────────────────────────────────────────────────
+  async function loadListings() {
+    window._listingsLoaded = true
+    try {
+      const res  = await fetch('/listings')
+      const data = await res.json()
+      document.getElementById('listings-grid').innerHTML = data.listings.map(l => `
+        <div class="listing-card">
+          <div class="listing-id">${l.id}</div>
+          <div class="listing-title">${l.title}</div>
+          <div class="listing-price">€${fmt(l.price)}</div>
+        </div>
+      `).join('')
+    } catch (e) {
+      document.getElementById('listings-grid').innerHTML = `<div style="color:#f87171">Error loading listings.</div>`
+    }
+  }
+
+  function fmt(n) {
+    if (!n) return '0'
+    return Number(n).toLocaleString('en-US')
+  }
+</script>
+</body>
+</html>
