@@ -17,7 +17,7 @@ The system simulates a Bulgarian property auction where three AI buyer agents re
               │
               ▼
    rmihaylov/roberta-base-nli-stsb-bg     ← Bulgarian-native sentence embedding model
-              │   (2 chunks per listing: structured header + narrative)
+              │   (4 chunks per listing: price, city, neighborhood, narrative)
               ▼
          ChromaDB                         ← vector store (cosine similarity)
               │
@@ -70,7 +70,7 @@ bulgarian-realestate-ai/
 │   └── listings/               # 60 Bulgarian property listings (imot_001.md … imot_060.md)
 │
 ├── rag/
-│   ├── ingest.py               # Embeds all listings → stores 120 chunks in ChromaDB (M2)
+│   ├── ingest.py               # Embeds all listings → stores 240 chunks in ChromaDB (M2)
 │   ├── search.py               # Embeds a query → retrieves top-N matching chunks
 │   └── pipeline.py             # search() + Gemini → natural language answer
 │
@@ -147,7 +147,7 @@ python data/generate_bulgarian_listings.py
 python rag/ingest.py
 ```
 
-This reads all 60 listings, embeds them, and stores 120 chunks in ChromaDB.
+This reads all 60 listings, embeds them as 4 focused chunks each, and stores 240 chunks in ChromaDB.
 
 ### 6. Start the web interface (M3)
 
@@ -185,8 +185,14 @@ View all 60 generated properties with titles and asking prices.
 **Why `rmihaylov/roberta-base-nli-stsb-bg` instead of a multilingual model?**
 This model is trained specifically on Bulgarian using NLI + STS-B objectives — exactly the tasks that make embeddings good for semantic search. A multilingual model like `paraphrase-multilingual-MiniLM-L12-v2` spreads its capacity across 50+ languages; this one focuses entirely on Bulgarian, producing sharper semantic matches for Bulgarian queries.
 
-**Why two chunks per listing instead of one?**
-Each listing has two semantically distinct zones: a structured header (facts: price, size, floor) and a narrative description (location, features, atmosphere). Splitting them allows the retriever to match on either factual criteria ("3 bedrooms under 500k") or descriptive language ("quiet neighbourhood near the sea") independently. Merging them into one chunk would dilute both signals.
+**Why four chunks per listing instead of one?**
+Each listing contains four semantically distinct types of information, each optimised for a different query type:
+- **Price chunk** — structured facts (price, area, bedrooms, year built) — matches factual queries like "3 bedrooms under 500k"
+- **City chunk** — city-level location phrase — matches queries like "apartment in Varna"
+- **Neighborhood chunk** — neighborhood-level phrase — matches queries like "quiet area in Лозенец"
+- **Narrative chunk** — full cleaned description — matches semantic queries like "sea view with modern interior"
+
+All 4 chunks share the same metadata (listing ID, city, neighborhood, price, bedrooms), so after retrieval we deduplicate by listing ID and fetch the full listing text to give Gemini complete context. A single chunk per listing would dilute all four signals into one vector.
 
 **Why Vertex AI instead of the direct Gemini API key?**
 The direct API (ai.google.dev) has strict free-tier quotas that hit rate limits almost immediately during development. Vertex AI uses Google Cloud billing, which provided $300 in credits — enough to run the full pipeline repeatedly without throttling.
