@@ -44,6 +44,9 @@ class AuctionState(TypedDict):
     round_number:      int
     bids_made:         bool             # were any bids made in last round?
 
+    # Bid memory: each agent's bids and outcomes this property
+    bid_history:       list[dict]  # {round, agent, bid, outcome, leader_bid}
+
     # Accumulated results
     results:           list[dict]
 
@@ -93,7 +96,8 @@ def start_property(state: AuctionState) -> dict:
         "active_agents": [],
         "current_leader": None,
         "round_number":  0,
-        "bids_made":     False
+        "bids_made":     False,
+        "bid_history":   []
     }
 
 
@@ -138,8 +142,9 @@ def run_round(state: AuctionState) -> dict:
     still_active = []
 
     for name in state["active_agents"]:
-        agent = agent_map[name]
-        bid   = agent.make_bid(current_price, state["evaluations"][name])
+        agent      = agent_map[name]
+        my_history = [h for h in state["bid_history"] if h["agent"] == name]
+        bid        = agent.make_bid(current_price, state["evaluations"][name], my_history)
         if bid and bid > current_price:
             bids[name] = bid
             still_active.append(name)
@@ -149,18 +154,30 @@ def run_round(state: AuctionState) -> dict:
 
     bids_made = bool(bids)
 
+    new_history = []
     if bids:
-        winner_name    = max(bids, key=bids.__getitem__)
-        current_price  = bids[winner_name]
+        winner_name   = max(bids, key=bids.__getitem__)
+        current_price = bids[winner_name]
         current_leader = winner_name
         print(f"    --> Лидер: {winner_name} с {current_price:,.0f} EUR")
+
+        # Record each bid's outcome in history
+        for name, bid in bids.items():
+            new_history.append({
+                "round":      round_num,
+                "agent":      name,
+                "bid":        bid,
+                "outcome":    "leader" if name == winner_name else "outbid",
+                "leader_bid": bids[winner_name]
+            })
 
     return {
         "round_number":   round_num,
         "current_price":  current_price,
         "current_leader": current_leader,
         "active_agents":  still_active,
-        "bids_made":      bids_made
+        "bids_made":      bids_made,
+        "bid_history":    state["bid_history"] + new_history
     }
 
 

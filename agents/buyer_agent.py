@@ -104,17 +104,17 @@ Otgovori SAMO s validen JSON v slednia format, bez nikakvi obyasneniya izvyn neg
             }
 
     # ─── BID ─────────────────────────────────────────────────────────────────
-    def make_bid(self, current_price: float, evaluation: dict) -> float | None:
+    def make_bid(self, current_price: float, evaluation: dict, bid_history: list[dict] | None = None) -> float | None:
         """
-        Given the current auction price and the agent's evaluation,
-        decide whether to bid and for how much.
+        Given the current auction price, the agent's evaluation, and their
+        bid history for this property, decide whether to bid and for how much.
+
+        bid_history is a list of this agent's previous bids this auction:
+          [{"round": 1, "bid": 500000, "outcome": "outbid", "leader_bid": 540000}, ...]
+
+        If outbid last round → increases increment to close the gap faster.
 
         Returns a bid amount (float) or None to pass.
-
-        Strategy logic:
-          conservative -> small increments (+3%), backs off if score < 6
-          aggressive   -> large increments (+8%), bids even on score 4+
-          balanced     -> medium increments (+5%), only bids on score 7+
         """
         if not evaluation["interested"]:
             return None
@@ -125,22 +125,25 @@ Otgovori SAMO s validen JSON v slednia format, bez nikakvi obyasneniya izvyn neg
         if current_price >= max_pay:
             return None
 
+        # Check if outbid last round → be more aggressive
+        was_outbid = bool(bid_history and bid_history[-1]["outcome"] == "outbid")
+
         if self.strategy == "conservative":
             if score < 6:
                 return None
-            bid = current_price * 1.03
+            increment = 1.05 if was_outbid else 1.03
 
         elif self.strategy == "aggressive":
             if score < 4:
                 return None
-            bid = current_price * 1.08
+            increment = 1.12 if was_outbid else 1.08
 
         else:  # balanced
             if score < 7:
                 return None
-            bid = current_price * 1.05
+            increment = 1.08 if was_outbid else 1.05
 
-        bid = min(bid, max_pay)
+        bid = min(current_price * increment, max_pay)
 
         if bid <= current_price:
             return None
